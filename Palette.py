@@ -1,12 +1,10 @@
 """Paper palette. idx: 0 grey, 1 blue, 2 rose, 3 olive, 4 amber.
 
 pal = Palette()
-pal.loadColor(1, 5)           -> 5 hex colors, light -> dark
-pal.loadColor([1, 4], 3)      -> 7 hex colors: blue (dark -> light), neutral, amber (light -> dark)
-pal.loadColor(1, np.inf)      -> continuous Colormap (sequential)
-pal.loadColor([1, 4], np.inf) -> continuous Colormap (diverging)
-
-The module-level loadColor(...) still works and is the same as Palette().loadColor(...).
+pal.load_color(1, 5)           -> 5 hex colors, light -> dark
+pal.load_color([1, 4], 3)      -> 7 hex colors: blue (dark -> light), neutral, amber (light -> dark)
+pal.load_color(1, np.inf)      -> continuous Colormap (sequential)
+pal.load_color([1, 4], np.inf) -> continuous Colormap (diverging)
 """
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap, to_hex
