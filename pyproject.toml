@@ -8,4 +8,7 @@ version = "0.1.0"
 dependencies = ["numpy", "matplotlib"]
 
 [tool.setuptools]
-py-modules = ["Palette"]
+packages = ["Palette"]
+
+[tool.setuptools.package-data]
+Palette = ["*.mplstyle"]
