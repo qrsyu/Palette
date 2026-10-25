@@ -10,7 +10,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
-from matplotlib.transforms import ScaledTranslation
+from matplotlib.transforms import Bbox
 
 from .colors import RAMPS
 from .journals import DEFAULT_JOURNAL, figure_size_mm
@@ -28,7 +28,8 @@ SIZE_PT = {"tick": 7, "label": 7, "title": 8, "legend": 6, "annotation": 6, "let
 LINE_PT = {"axes": 0.5, "data": 1.0}
 TICK_DIRECTION = "out"
 TICK_LENGTH_PT = 2
-LETTER_OFFSET_MM = (-5, 1)                # panel letter position from the panel's top-left corner (x, y)
+LETTER_OFFSET_MM = (0, 0.5)               # panel letter position from the top-left of the panel's full area
+                                          # (axes + tick labels + axis labels + title), (x, y)
 
 COLORS = [RAMPS[i][5] for i in (1, 2, 3, 4, 0)]   # default line colours: blue, rose, olive, amber, grey
 PNG_DPI = 600
@@ -133,15 +134,26 @@ def make_figure(layout, width="full", height_mm=100, journal=DEFAULT_JOURNAL, wi
 
 
 def add_panel_letter(ax, letter):
-    """Bold uppercase letter at a fixed mm offset from the panel's top-left corner.
-    constrained_layout lines up panel edges, so letters line up across rows and columns."""
+    """Bold uppercase letter just above the top-left corner of the panel's full area
+    (axes plus tick labels, axis labels and title), so it never overlaps the axis.
+    The position is worked out at draw time, after constrained_layout has placed everything."""
     font = _first_font(LETTER_FONT)
     if font is None:
         warnings.warn("Times New Roman not found; panel letters use a generic serif.")
+
+    def panel_box(renderer):            # axes + axis decorations + titles (legends etc. sit inside the axes)
+        parts = [ax.get_window_extent(renderer)]
+        if ax.axison:
+            parts += [axis.get_tightbbox(renderer) for axis in (ax.xaxis, ax.yaxis)]
+        parts += [t.get_window_extent(renderer) for t in (ax.title, ax._left_title, ax._right_title)
+                  if t.get_visible() and t.get_text()]
+        return Bbox.union([b for b in parts if b is not None and b.width and b.height])
+
     dx, dy = LETTER_OFFSET_MM
-    shift = ScaledTranslation(mm2in(dx), mm2in(dy), ax.figure.dpi_scale_trans)
-    ax.text(0, 1, letter.upper(), transform=ax.transAxes + shift, ha="left", va="bottom",
-            fontsize=SIZE_PT["letter"], fontweight="bold", family=font or "serif")
+    ax.annotate(letter.upper(), xy=(0, 1), xycoords=panel_box,
+                       xytext=(dx * 72 / 25.4, dy * 72 / 25.4), textcoords="offset points",
+                       ha="left", va="bottom", fontsize=SIZE_PT["letter"], fontweight="bold",
+                       family=font or "serif")
 
 
 def save_figure(fig, path, png=False):
